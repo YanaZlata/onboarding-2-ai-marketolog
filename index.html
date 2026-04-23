@@ -1,711 +1,1321 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Онбординг #2 · Фундамент работы с нейронками</title>
-<style>
-  :root {
-    --bg: #0b0d12;
-    --bg-2: #12151c;
-    --bg-3: #1a1e28;
-    --border: #252a36;
-    --text: #e8ecf3;
-    --muted: #8b93a7;
-    --accent: #7c5cff;
-    --accent-2: #00e0a8;
-    --danger: #ff5a6a;
-    --warn: #ffb547;
-    --ok: #00e0a8;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, 'SF Pro Display', 'Inter', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.55;
-    font-size: 16px;
-  }
-  .app { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
-  nav.sidebar {
-    background: var(--bg-2);
-    border-right: 1px solid var(--border);
-    padding: 24px 16px;
-    position: sticky; top: 0;
-    height: 100vh; overflow-y: auto;
-  }
-  .logo {
-    font-size: 13px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    margin-bottom: 4px;
-  }
-  .logo b { color: var(--accent); }
-  .title-small {
-    font-size: 18px; font-weight: 700; margin: 0 0 20px; color: var(--text);
-  }
-  nav a {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 10px;
-    color: var(--muted); text-decoration: none;
-    font-size: 14px; margin-bottom: 2px;
-    transition: all .15s;
-  }
-  nav a:hover { background: var(--bg-3); color: var(--text); }
-  nav a.active { background: rgba(124,92,255,.15); color: var(--accent); }
-  nav .sep { height: 1px; background: var(--border); margin: 12px 4px; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Модуль 1 · Экосистема Claude</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  main { padding: 48px 56px; max-width: 920px; }
-  section { margin-bottom: 72px; scroll-margin-top: 24px; }
-  h1 {
-    font-size: 40px; line-height: 1.15; margin: 0 0 12px;
-    letter-spacing: -.5px;
-  }
-  h2 {
-    font-size: 28px; margin: 0 0 16px;
-    letter-spacing: -.3px;
-  }
-  h3 {
-    font-size: 20px; margin: 24px 0 10px;
-    color: var(--text);
-  }
-  p { margin: 0 0 14px; color: #cfd4e0; }
-  .lead { font-size: 18px; color: #d8dde8; }
-  .eyebrow {
-    display: inline-block;
-    background: rgba(124,92,255,.15);
-    color: var(--accent);
-    font-size: 12px; font-weight: 600;
-    letter-spacing: 1px; text-transform: uppercase;
-    padding: 6px 12px; border-radius: 6px;
-    margin-bottom: 16px;
-  }
-  .card {
-    background: var(--bg-2);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 16px;
-  }
-  .card.accent {
-    background: linear-gradient(135deg, rgba(124,92,255,.12), rgba(0,224,168,.05));
-    border-color: rgba(124,92,255,.3);
-  }
-  .card.warn {
-    background: rgba(255,181,71,.08);
-    border-color: rgba(255,181,71,.3);
-  }
-  .card.ok {
-    background: rgba(0,224,168,.08);
-    border-color: rgba(0,224,168,.3);
-  }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-  @media (max-width: 880px) {
-    .app { grid-template-columns: 1fr; }
-    nav.sidebar { position: static; height: auto; }
-    main { padding: 32px 20px; }
-    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-  }
-  ul { padding-left: 22px; margin: 0 0 14px; }
-  li { margin-bottom: 6px; color: #cfd4e0; }
-  .tag {
-    display: inline-block; padding: 3px 10px; border-radius: 6px;
-    background: var(--bg-3); color: var(--muted);
-    font-size: 12px; margin-right: 6px;
-  }
-  .tag.v { background: rgba(124,92,255,.2); color: #b8a8ff; }
-  .tag.g { background: rgba(0,224,168,.15); color: #6eecc7; }
-  .tag.w { background: rgba(255,181,71,.15); color: #ffd18a; }
-  .tag.r { background: rgba(255,90,106,.15); color: #ff9ca7; }
+    :root {
+      --bg: #0e0e10;
+      --bg-card: #16161a;
+      --bg-card2: #1c1c22;
+      --border: #2a2a32;
+      --text: #e2e2e9;
+      --text-muted: #888896;
+      --accent: #7c5cff;
+      --accent2: #00e0a8;
+      --accent3: #ff6b6b;
+      --accent4: #ffd166;
+      --sidebar-w: 280px;
+      --radius: 12px;
+    }
 
-  code, .mono {
-    font-family: 'SF Mono', ui-monospace, Monaco, Consolas, monospace;
-    background: var(--bg-3); color: #e8ecf3;
-    padding: 2px 7px; border-radius: 5px; font-size: 14px;
-  }
-  pre {
-    background: var(--bg-3); border: 1px solid var(--border);
-    border-radius: 10px; padding: 16px;
-    overflow-x: auto; font-size: 14px; line-height: 1.5;
-  }
-  pre code { background: transparent; padding: 0; }
+    html { scroll-behavior: smooth; }
 
-  /* Progress bar курса */
-  .path {
-    display: grid; grid-template-columns: repeat(8, 1fr);
-    gap: 6px; margin: 20px 0;
-  }
-  .path .step {
-    background: var(--bg-3); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px 8px;
-    text-align: center; font-size: 12px; color: var(--muted);
-    position: relative;
-  }
-  .path .step.done { background: rgba(0,224,168,.1); border-color: rgba(0,224,168,.3); color: var(--ok); }
-  .path .step.now {
-    background: linear-gradient(135deg, var(--accent), #5432d1);
-    border-color: var(--accent); color: #fff;
-    box-shadow: 0 8px 24px rgba(124,92,255,.3);
-    transform: scale(1.05);
-  }
-  .path .step .num { font-weight: 700; font-size: 18px; display: block; margin-bottom: 4px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+    }
 
-  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
-  .compare .col { padding: 20px; }
-  .compare .bad { background: rgba(255,90,106,.08); border-right: 1px solid var(--border); }
-  .compare .good { background: rgba(0,224,168,.08); }
-  .compare h4 { margin: 0 0 10px; font-size: 14px; }
+    /* ─── LAYOUT ─── */
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      min-height: 100vh;
+    }
 
-  .model-row {
-    display: grid; grid-template-columns: 160px 1fr 140px;
-    gap: 14px; padding: 14px 0;
-    border-bottom: 1px solid var(--border);
-    align-items: center;
-  }
-  .model-row:last-child { border-bottom: none; }
-  .model-row .name { font-weight: 700; font-size: 16px; }
-  .model-row .desc { font-size: 14px; color: var(--muted); }
-  .model-row .use { font-size: 12px; color: var(--accent-2); text-align: right; }
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
 
-  .formula {
-    font-size: 22px; text-align: center; padding: 20px;
-    background: linear-gradient(135deg, rgba(124,92,255,.1), rgba(0,224,168,.08));
-    border-radius: 12px; border: 1px dashed rgba(124,92,255,.4);
-    margin: 16px 0; font-weight: 600;
-  }
-  .formula .arrow { color: var(--accent); margin: 0 8px; }
+    .sidebar-brand {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .sidebar-brand .tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: #7c5cff22;
+      border: 1px solid #7c5cff44;
+      border-radius: 6px;
+      padding: 3px 8px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .sidebar-brand h3 {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+      line-height: 1.4;
+    }
 
-  .kv { display: grid; grid-template-columns: 180px 1fr; gap: 14px; padding: 10px 0; border-bottom: 1px dashed var(--border); }
-  .kv:last-child { border-bottom: none; }
-  .kv .k { color: var(--muted); font-size: 13px; }
+    .nav-list { list-style: none; }
+    .nav-list li a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 20px;
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 13.5px;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+    }
+    .nav-list li a:hover {
+      color: var(--text);
+      background: #ffffff08;
+      border-left-color: var(--border);
+    }
+    .nav-list li a.active {
+      color: var(--accent);
+      background: #7c5cff12;
+      border-left-color: var(--accent);
+      font-weight: 600;
+    }
+    .nav-list li a .icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
 
-  .hero {
-    background: radial-gradient(ellipse at top left, rgba(124,92,255,.2), transparent 60%),
-                radial-gradient(ellipse at bottom right, rgba(0,224,168,.12), transparent 60%),
-                var(--bg-2);
-    border: 1px solid var(--border);
-    border-radius: 20px; padding: 48px; margin-bottom: 32px;
-  }
-  .pill {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--bg-3); border: 1px solid var(--border);
-    padding: 6px 12px; border-radius: 99px; font-size: 12px; color: var(--muted);
-    margin-right: 8px;
-  }
-  .highlight { color: var(--accent-2); font-weight: 600; }
-  .highlight-v { color: var(--accent); font-weight: 600; }
+    .nav-divider {
+      margin: 8px 20px;
+      border: none;
+      border-top: 1px solid var(--border);
+    }
 
-  .big-num { font-size: 56px; font-weight: 800; line-height: 1; color: var(--accent); margin-bottom: 6px; }
-  blockquote {
-    border-left: 3px solid var(--accent);
-    padding: 4px 18px; margin: 16px 0;
-    color: #d8dde8; font-style: italic;
-  }
-  .cta-end {
-    background: linear-gradient(135deg, #1a1e28, #0b0d12);
-    border: 1px solid rgba(124,92,255,.4);
-    border-radius: 20px; padding: 40px;
-    text-align: center; margin-top: 40px;
-  }
-  .cta-end h2 { font-size: 32px; }
-</style>
+    /* ─── MAIN ─── */
+    .main {
+      padding: 48px 56px;
+      max-width: 900px;
+    }
+
+    /* ─── HERO ─── */
+    .hero { margin-bottom: 64px; }
+    .hero .meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .chip {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .chip-purple { background: #7c5cff22; color: var(--accent); border: 1px solid #7c5cff33; }
+    .chip-teal   { background: #00e0a822; color: var(--accent2); border: 1px solid #00e0a833; }
+    .chip-red    { background: #ff6b6b22; color: var(--accent3); border: 1px solid #ff6b6b33; }
+    .chip-yellow { background: #ffd16622; color: var(--accent4); border: 1px solid #ffd16633; }
+
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #fff 0%, #a09ccc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 20px;
+    }
+    .hero-desc {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 600px;
+      line-height: 1.65;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 24px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .stat-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .stat-label { font-size: 12px; color: var(--text-muted); }
+
+    /* ─── SECTION ─── */
+    .section { margin-bottom: 72px; scroll-margin-top: 32px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .section-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .icon-purple { background: #7c5cff22; }
+    .icon-teal   { background: #00e0a822; }
+    .icon-red    { background: #ff6b6b22; }
+    .icon-yellow { background: #ffd16622; }
+
+    .section-header h2 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -.01em;
+    }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .card h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .card p { color: var(--text-muted); font-size: 14px; }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .cards-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    .card-accent-purple { border-left: 3px solid var(--accent); }
+    .card-accent-teal   { border-left: 3px solid var(--accent2); }
+    .card-accent-red    { border-left: 3px solid var(--accent3); }
+    .card-accent-yellow { border-left: 3px solid var(--accent4); }
+
+    /* ─── CALLOUT ─── */
+    .callout {
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin: 20px 0;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .callout-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .callout p { font-size: 14px; line-height: 1.65; }
+    .callout strong { font-weight: 700; }
+    .callout-tip    { background: #00e0a814; border: 1px solid #00e0a833; }
+    .callout-warn   { background: #ffd16614; border: 1px solid #ffd16633; }
+    .callout-info   { background: #7c5cff14; border: 1px solid #7c5cff33; }
+    .callout-danger { background: #ff6b6b14; border: 1px solid #ff6b6b33; }
+
+    /* ─── CODE BLOCK ─── */
+    .code-block {
+      background: #0a0a0e;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #c9d1d9;
+      overflow-x: auto;
+      margin: 16px 0;
+      white-space: pre-wrap;
+    }
+    .code-block .comment { color: #6a9955; }
+    .code-block .key { color: var(--accent); font-weight: 700; }
+    .code-block .val { color: var(--accent2); }
+
+    /* ─── LIST ─── */
+    .styled-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .styled-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .styled-list li::before {
+      content: '→';
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .styled-list li strong { color: var(--text); }
+
+    /* ─── STEPS ─── */
+    .steps { display: flex; flex-direction: column; gap: 0; }
+    .step {
+      display: flex;
+      gap: 20px;
+      padding-bottom: 28px;
+      position: relative;
+    }
+    .step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 17px;
+      top: 40px;
+      width: 2px;
+      bottom: 0;
+      background: var(--border);
+    }
+    .step-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+    .step-body h5 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .step-body p { font-size: 14px; color: var(--text-muted); }
+
+    /* ─── MODELS TABLE ─── */
+    .models-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .models-table th {
+      text-align: left;
+      padding: 12px 16px;
+      background: var(--bg-card2);
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      border-bottom: 1px solid var(--border);
+    }
+    .models-table th:first-child { border-radius: var(--radius) 0 0 0; }
+    .models-table th:last-child  { border-radius: 0 var(--radius) 0 0; }
+    .models-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+      vertical-align: top;
+    }
+    .models-table tr:last-child td { border-bottom: none; }
+    .models-table tr:hover td { background: #ffffff05; }
+    .models-table .model-name { font-weight: 800; color: var(--text); }
+    .models-table .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .badge-top    { background: #7c5cff22; color: var(--accent); }
+    .badge-mid    { background: #00e0a822; color: var(--accent2); }
+    .badge-fast   { background: #ffd16622; color: var(--accent4); }
+    .models-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* ─── PROMPT FORMULA ─── */
+    .prompt-formula {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+    .formula-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      min-width: 90px;
+      text-align: center;
+    }
+    .formula-item .fi-num {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+    .formula-item .fi-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .formula-item .fi-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .formula-arrow {
+      display: flex;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 18px;
+      padding-top: 14px;
+    }
+
+    /* ─── EXAMPLE COMPARE ─── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .compare-bad  { border-top: 3px solid var(--accent3); }
+    .compare-good { border-top: 3px solid var(--accent2); }
+    .compare-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 10px;
+    }
+    .compare-bad .compare-label  { color: var(--accent3); }
+    .compare-good .compare-label { color: var(--accent2); }
+
+    /* ─── TASK BOX ─── */
+    .task-box {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 12px;
+    }
+    .task-box .task-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .task-box .task-num {
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .task-box .task-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .task-box .task-time {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 10px;
+    }
+    .task-box p { font-size: 14px; color: var(--text-muted); }
+
+    /* ─── NEXT LESSONS ─── */
+    .next-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .next-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-decoration: none;
+      transition: all .2s;
+    }
+    .next-card:hover { border-color: var(--accent); background: #7c5cff0a; }
+    .next-card .nc-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 8px;
+    }
+    .next-card .nc-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .next-card .nc-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ─── FOOTER ─── */
+    .footer-line {
+      border-top: 1px solid var(--border);
+      padding-top: 40px;
+      margin-top: 40px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      padding-bottom: 60px;
+    }
+    .footer-line strong { color: var(--accent); }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; }
+      .main { padding: 32px 24px; }
+      .cards-grid, .cards-grid-3, .compare-grid, .next-cards { grid-template-columns: 1fr; }
+      .prompt-formula { flex-direction: column; }
+      .formula-arrow { display: none; }
+    }
+  </style>
 </head>
 <body>
-<div class="app">
 
-<nav class="sidebar">
-  <div class="logo"><b>АИ · МАРКЕТОЛОГ</b> · Онбординг</div>
-  <div class="title-small">Урок #2 — Фундамент</div>
-  <a href="#intro" class="active">🎯 Старт</a>
-  <a href="#path">🗺️ Где ты сейчас</a>
-  <div class="sep"></div>
-  <a href="#zoo">🧠 Зоопарк нейронок</a>
-  <a href="#prompt">💬 Что такое промт</a>
-  <a href="#meta">🔁 Метапромтинг</a>
-  <a href="#context">📦 Контекст и окно</a>
-  <div class="sep"></div>
-  <a href="#claude">⚡ Знакомство с Клодом</a>
-  <a href="#cowork">🧩 Cowork vs Chat vs Code</a>
-  <a href="#models">🎛️ Модели и лимиты</a>
-  <a href="#memory">🧬 Память и перенос</a>
-  <div class="sep"></div>
-  <a href="#practice">🏋️ Практика на эфире</a>
-  <a href="#homework">📋 Задание</a>
-  <a href="#next">→ Что дальше</a>
-</nav>
+<div class="layout">
 
-<main>
-
-<!-- INTRO -->
-<section id="intro">
-  <div class="hero">
-    <span class="eyebrow">Онбординг · Урок 2 из 2 · ~35 минут</span>
-    <h1>Фундамент работы с нейронками</h1>
-    <p class="lead">Ты уже собрал стек. Теперь разбираемся <b>как думать</b>, чтобы этот стек реально пахал на тебя, а не ты на него. Без этого шага следующие 6 воркшопов — чистая теория.</p>
-    <div style="margin-top: 20px;">
-      <span class="pill">🎁 Что заберёшь</span>
-      <span class="pill">⚡ Базу промтинга</span>
-      <span class="pill">🧠 Карту нейронок</span>
-      <span class="pill">⚙️ Настроенного Клода</span>
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="tag">AI · Маркетолог · Модуль 1</div>
+      <h3>LIVE по экосистеме Claude</h3>
     </div>
-  </div>
-
-  <div class="grid-3">
-    <div class="card">
-      <div class="big-num">1</div>
-      <h3>Перестанешь зависеть от одной нейронки</h3>
-      <p>Поймёшь кто за что отвечает: GPT, Claude, Gemini, Perplexity. Прекратишь спрашивать не то не у того.</p>
-    </div>
-    <div class="card">
-      <div class="big-num">2</div>
-      <h3>Научишься писать промты, которые работают</h3>
-      <p>База + метапромтинг. Нейронка сама напишет тебе промт, а ты только докрутишь.</p>
-    </div>
-    <div class="card">
-      <div class="big-num">3</div>
-      <h3>Развернёшь Клод как рабочее место</h3>
-      <p>Cowork, Customize, Routers, модели. Перенесёшь базу из GPT и пойдёшь дальше по курсу во всеоружии.</p>
-    </div>
-  </div>
-
-  <blockquote>
-    Машина, короче: инструменты не работают, пока не научился ими думать. Сегодня закрываем этот гэп — и дальше курс идёт в удовольствие.
-  </blockquote>
-</section>
-
-<!-- PATH -->
-<section id="path">
-  <span class="eyebrow">Карта курса</span>
-  <h2>🗺️ Где ты сейчас находишься</h2>
-  <p>8 воркшопов. Сейчас закрываем фундамент. После него — цифровые сотрудники, исследования, упаковка, лендинги, продажи. Каждый следующий стоит на предыдущем.</p>
-
-  <div class="path">
-    <div class="step done"><span class="num">1</span>Стек инструментов</div>
-    <div class="step now"><span class="num">2</span>Фундамент ИИ<br><small style="opacity:.8;">← ты здесь</small></div>
-    <div class="step"><span class="num">3</span>Deep Research</div>
-    <div class="step"><span class="num">4</span>ДНК Клиента</div>
-    <div class="step"><span class="num">5</span>Упаковка / Оффер</div>
-    <div class="step"><span class="num">6</span>Лендинги</div>
-    <div class="step"><span class="num">7</span>Контент & визуал</div>
-    <div class="step"><span class="num">8</span>Продажи & апп</div>
-  </div>
-
-  <div class="card accent">
-    <h3 style="margin-top:0;">Почему именно сейчас</h3>
-    <p>Через 2 урока ты будешь запускать <span class="highlight-v">Deep Research параллельно в 4 нейронках</span>. Если ты сейчас не понимаешь как они отличаются и как писать промт — ты просто получишь 4 кучи мусора. Сегодня — чтоб этого не было.</p>
-  </div>
-</section>
-
-<!-- ZOO -->
-<section id="zoo">
-  <span class="eyebrow">Карта нейронок</span>
-  <h2>🧠 Зоопарк: кто за что отвечает</h2>
-  <p>Правило 95/4 от Гарварда: 95% задач закрываются 3–4 инструментами. Один ChatGPT — это как гонять на одной машине и по трассе, и по грязи, и в магазин. Тянет, но везде средне.</p>
-
-  <div class="card">
-    <div class="model-row">
-      <div>
-        <div class="name">Claude</div>
-        <span class="tag v">наш основной</span>
-      </div>
-      <div class="desc">Сильный в длинных текстах, коде, методологиях, анализе. Понимает контекст как никто. Главный герой курса — с ним будем делать 80% работы.</div>
-      <div class="use">тексты · код · методологии</div>
-    </div>
-    <div class="model-row">
-      <div>
-        <div class="name">ChatGPT</div>
-        <span class="tag g">универсал</span>
-      </div>
-      <div class="desc">Народный универсал. Хорош в брейншторме, быстрых ответах, картинках (DALL-E), GPT-5 подтянули. Но длинный контекст и code — слабее Клода.</div>
-      <div class="use">брейншторм · быстрые ответы</div>
-    </div>
-    <div class="model-row">
-      <div>
-        <div class="name">Gemini</div>
-        <span class="tag g">гугл-экосистема</span>
-      </div>
-      <div class="desc">Огромный контекст (1M+ токенов), интеграция с Google (Docs, Gmail, YouTube). Хорошо на длинных PDF-ках и YouTube-видео. Gems = аналог проектов.</div>
-      <div class="use">длинные документы · google</div>
-    </div>
-    <div class="model-row">
-      <div>
-        <div class="name">Perplexity</div>
-        <span class="tag w">ресерч</span>
-      </div>
-      <div class="desc">Это поисковик на стероидах. Даёт ссылки-источники. Лучший для Deep Research и любой задачи "найди факты в интернете".</div>
-      <div class="use">поиск · факты · источники</div>
-    </div>
-    <div class="model-row">
-      <div>
-        <div class="name">NotebookLM</div>
-        <span class="tag w">точка сборки</span>
-      </div>
-      <div class="desc">Заливаешь 50 PDF / YouTube / чатов — получаешь одного ассистента, который знает всю эту базу. Незаменим как "точка сборки" результатов.</div>
-      <div class="use">база знаний · синтез</div>
-    </div>
-  </div>
-
-  <div class="card warn">
-    <b>⚠️ Главный инсайт:</b> Не заменяй, а стакай. Deep Research кидаешь в 3 нейронки параллельно → собираешь результаты в NotebookLM → финальный синтез в Клоде. Так работает мультивселенная.
-  </div>
-</section>
-
-<!-- PROMPT -->
-<section id="prompt">
-  <span class="eyebrow">База база</span>
-  <h2>💬 Что такое промт и из чего он состоит</h2>
-  <p>Промт — это не «вопрос нейронке». Промт — это <b>техническое задание сотруднику, у которого нулевой контекст о тебе</b>. Если задание говно — результат говно. Без вариантов.</p>
-
-  <div class="formula">
-    РОЛЬ <span class="arrow">→</span> КОНТЕКСТ <span class="arrow">→</span> ЗАДАЧА <span class="arrow">→</span> ОГРАНИЧЕНИЯ <span class="arrow">→</span> ФОРМАТ
-  </div>
-
-  <div class="compare">
-    <div class="col bad">
-      <h4>❌ Как 90% людей пишут</h4>
-      <pre><code>напиши пост про мой курс</code></pre>
-      <p style="color: #ff9ca7; font-size: 14px; margin: 0;">Нейронка выдаёт усреднённую херню, потому что у неё нет ни роли, ни контекста, ни цели.</p>
-    </div>
-    <div class="col good">
-      <h4>✅ Как надо</h4>
-      <pre><code>Роль: ты маркетолог-копирайтер, спец по прогреву в соцсетях.
-Контекст: у меня курс по AI-маркетингу, ЦА — предприниматели 28-45, боль — отстают от конкурентов.
-Задача: напиши пост на 1500 знаков для Threads.
-Ограничения: без канцелярита, живой язык, мат точечно.
-Формат: хук → история → инсайт → CTA.</code></pre>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3 style="margin-top:0;">5 элементов сильного промта</h3>
-    <ul>
-      <li><b>Роль</b> — кем нейронка должна прикинуться (маркетолог, продажник, коуч)</li>
-      <li><b>Контекст</b> — что за бизнес, кто ЦА, что уже сделано</li>
-      <li><b>Задача</b> — чего конкретно надо на выходе</li>
-      <li><b>Ограничения</b> — стиль, длина, запреты («без буллшита», «без эмодзи»)</li>
-      <li><b>Формат</b> — структура ответа (список, таблица, 3 варианта)</li>
-    </ul>
-  </div>
-</section>
-
-<!-- META -->
-<section id="meta">
-  <span class="eyebrow">Чит-код</span>
-  <h2>🔁 Метапромтинг — ИИ пишет промт для ИИ</h2>
-  <p>Тебе лень каждый раз писать полотно? Правильно. Пускай нейронка сама пишет промт, а ты только проверь.</p>
-
-  <div class="card accent">
-    <h3 style="margin-top:0;">Рабочий мета-промт (копируй)</h3>
-    <pre><code>Ты — промт-инженер мирового уровня.
-Моя цель: [опиши задачу 1-2 предложениями].
-Я хочу получить на выходе [опиши результат].
-
-Задай мне 5-7 уточняющих вопросов, чтобы собрать весь
-нужный контекст. После моих ответов — напиши идеальный
-промт по структуре: Роль → Контекст → Задача →
-Ограничения → Формат. И дай 2 варианта: базовый и
-расширенный с chain-of-thought.</code></pre>
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <h3 style="margin-top:0;">Когда применять</h3>
-      <ul>
-        <li>Новая задача, не знаешь с чего начать</li>
-        <li>Нужен промт для команды / ассистента</li>
-        <li>Чувствуешь, что «чего-то не хватает» в ответах</li>
-        <li>Хочешь собрать инструкцию для Projects / Cowork</li>
+    <nav>
+      <ul class="nav-list">
+        <li><a href="#start" class="active"><span class="icon">🎯</span> Старт</a></li>
+        <li><a href="#map"><span class="icon">🗺️</span> Карта модуля</a></li>
+        <li><a href="#macwhisper"><span class="icon">🎙️</span> MacWhisper</a></li>
+        <li><a href="#migration"><span class="icon">🔄</span> Переезд с ChatGPT</a></li>
+        <li><a href="#why-claude"><span class="icon">🧠</span> Почему Claude</a></li>
+        <li><a href="#prompt"><span class="icon">💬</span> Что такое промт</a></li>
+        <li><a href="#metaprompt"><span class="icon">🔁</span> Метапромтинг</a></li>
+        <li><a href="#demo"><span class="icon">⚡</span> Живая демо</a></li>
+        <hr class="nav-divider" />
+        <li><a href="#models"><span class="icon">🎛️</span> Модели Claude</a></li>
+        <li><a href="#tokens"><span class="icon">📦</span> Токены и сессии</a></li>
+        <li><a href="#context"><span class="icon">🪟</span> Контекстное окно</a></li>
+        <li><a href="#desktop"><span class="icon">💻</span> Desktop vs Web</a></li>
+        <li><a href="#code"><span class="icon">🖥️</span> Claude Code</a></li>
+        <li><a href="#chrome"><span class="icon">🌐</span> Claude в Chrome</a></li>
+        <hr class="nav-divider" />
+        <li><a href="#practice"><span class="icon">🏋️</span> Практика</a></li>
+        <li><a href="#homework"><span class="icon">📋</span> Задание</a></li>
+        <li><a href="#next"><span class="icon">→</span> Что дальше</a></li>
       </ul>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0;">🏋️ Мини-тренировка (сейчас на эфире)</h3>
-      <ol style="padding-left: 18px; margin: 0;">
-        <li>Берём реальную задачу из чата</li>
-        <li>Скармливаем мета-промт в Клод</li>
-        <li>Отвечаем на вопросы</li>
-        <li>Получаем готовый промт и тестим</li>
-      </ol>
-    </div>
-  </div>
-</section>
+    </nav>
+  </aside>
 
-<!-- CONTEXT -->
-<section id="context">
-  <span class="eyebrow">Техническая база</span>
-  <h2>📦 Что такое контекст и контекстное окно</h2>
-  <p>Контекст — это всё, что нейронка «помнит» в текущем диалоге: твой промт, файлы, предыдущие сообщения, системная инструкция. <b>Контекстное окно</b> — сколько этого влезет.</p>
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <main class="main">
 
-  <div class="grid-3">
-    <div class="card">
-      <div class="big-num" style="font-size: 36px;">200K</div>
-      <h3>Claude Sonnet</h3>
-      <p>~150 страниц текста. Базовая рабочая модель для большинства задач.</p>
-    </div>
-    <div class="card">
-      <div class="big-num" style="font-size: 36px;">1M</div>
-      <h3>Claude Opus (1M)</h3>
-      <p>~750 страниц. Для больших проектов, длинных расшифровок, целых книг за раз.</p>
-    </div>
-    <div class="card">
-      <div class="big-num" style="font-size: 36px;">2M</div>
-      <h3>Gemini 2.5 Pro</h3>
-      <p>Рекордсмен по объёму. Для гигантских PDF, видео, целых кодовых баз.</p>
-    </div>
-  </div>
-
-  <div class="card warn">
-    <h3 style="margin-top:0;">⚠️ Главное, что надо понять</h3>
-    <p>Когда окно заполняется — нейронка начинает <b>забывать начало разговора</b>. Поэтому:</p>
-    <ul>
-      <li>Долгие диалоги → начинай новый чат, кидай сводку</li>
-      <li>Важный контекст → выноси в Projects / Cowork как постоянную инструкцию</li>
-      <li>Не пихай «на всякий случай» — пихай то, что нужно под задачу</li>
-    </ul>
-  </div>
-</section>
-
-<!-- CLAUDE -->
-<section id="claude">
-  <span class="eyebrow">Основной инструмент курса</span>
-  <h2>⚡ Знакомство с Клодом</h2>
-  <p>Клод за последний месяц перестал быть просто чатом. Сейчас это целая операционка для работы с ИИ. Разбираем что к чему.</p>
-
-  <div class="card">
-    <div class="kv"><div class="k">Claude.ai (веб-чат)</div><div>Обычный чат, Projects (база знаний), Artifacts (код/визуал). Тут живёт основная работа новичка.</div></div>
-    <div class="kv"><div class="k">Claude Desktop App</div><div>То же самое, но ставится на комп. Быстрее запускается, работает с локальными файлами.</div></div>
-    <div class="kv"><div class="k">Claude Code</div><div>Для кода и автоматизации. Через неделю курса ты тоже будешь в нём — делать лендинги, ботов, ассистентов.</div></div>
-    <div class="kv"><div class="k">Claude Cowork</div><div>Новая штука: Клод видит весь твой проект целиком. Не отдельные файлы, а всю папку / бизнес как единое целое.</div></div>
-    <div class="kv"><div class="k">Routines</div><div>Задачи, которые крутятся «пока ноут закрыт». Поставил утром — пришло готовое к вечеру.</div></div>
-    <div class="kv"><div class="k">Dispatch</div><div>Управление Клодом с телефона. Стоишь в пробке — запускаешь ресерч с мобилы.</div></div>
-    <div class="kv"><div class="k">Customize / Styles</div><div>Настраиваешь стиль ответов под себя (ToV, формат, запреты). Один раз — и Клод везде говорит твоим языком.</div></div>
-  </div>
-
-  <blockquote>
-    Короче: за $20/мес ты получаешь то, за что компании платят миллионы. Это база. Это фундамент. Отсюда растёт всё остальное на курсе.
-  </blockquote>
-</section>
-
-<!-- COWORK -->
-<section id="cowork">
-  <span class="eyebrow">Чем Cowork отличается от всего</span>
-  <h2>🧩 Cowork vs обычный чат vs Claude Code</h2>
-
-  <div class="grid-3">
-    <div class="card">
-      <h3 style="margin-top:0;">💬 Обычный чат</h3>
-      <p><b>Что это:</b> одно окно, один диалог. Закинул — ответил.</p>
-      <p><b>Когда юзать:</b> быстрые вопросы, отдельные задачи без связи с другими.</p>
-      <p><b>Минус:</b> каждый раз начинаешь с нуля, нет общей памяти.</p>
-    </div>
-    <div class="card" style="border-color: rgba(124,92,255,.4);">
-      <h3 style="margin-top:0;">🧩 Cowork <span class="tag v">новинка</span></h3>
-      <p><b>Что это:</b> рабочее пространство, где Клод видит весь проект целиком — файлы, переписку, контекст.</p>
-      <p><b>Когда юзать:</b> когда задача длинная, много материалов, нужна общая картинка.</p>
-      <p><b>Плюс:</b> не надо каждый раз объяснять заново. Клод помнит.</p>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0;">⚙️ Claude Code</h3>
-      <p><b>Что это:</b> терминал + Клод. Для кода, автоматизации, лендингов.</p>
-      <p><b>Когда юзать:</b> когда делаешь сайт, бота, ассистента, обрабатываешь кучу файлов.</p>
-      <p><b>Это не страшно:</b> на курсе покажем, даже «мамочка в декрете» справляется.</p>
-    </div>
-  </div>
-
-  <div class="card accent">
-    <h3 style="margin-top:0;">Routers / Dispatch — коротко</h3>
-    <p><b>Routers</b> — Клод сам выбирает какую модель (Opus/Sonnet/Haiku) кинуть на задачу. Не думаешь — он сам разрулит.<br>
-    <b>Dispatch</b> — то же самое, но с телефона. Закинул задачу в метро — получил результат дома.</p>
-  </div>
-</section>
-
-<!-- MODELS -->
-<section id="models">
-  <span class="eyebrow">Не все модели одинаково полезны</span>
-  <h2>🎛️ Модели Клода: когда какую</h2>
-
-  <div class="card">
-    <div class="model-row">
-      <div>
-        <div class="name">Opus 4.7</div>
-        <span class="tag v">топ</span>
+    <!-- ─── HERO ─── -->
+    <div class="hero" id="start">
+      <div class="meta">
+        <span class="chip chip-purple">Онбординг</span>
+        <span class="chip chip-teal">Урок 1 из 8</span>
+        <span class="chip chip-yellow">~2 часа</span>
       </div>
-      <div class="desc">Самая мощная. Сложный анализ, методологии, стратегия, длинные ресёрчи. Есть версия с окном 1M токенов.</div>
-      <div class="use">сложное · стратегия · код</div>
-    </div>
-    <div class="model-row">
-      <div>
-        <div class="name">Sonnet 4.6</div>
-        <span class="tag g">рабочая лошадка</span>
-      </div>
-      <div class="desc">Баланс скорости и качества. На ней делаем 80% задач: тексты, анализ, лендинги, ассистентов.</div>
-      <div class="use">ежедневка</div>
-    </div>
-    <div class="model-row">
-      <div>
-        <div class="name">Haiku 4.5</div>
-        <span class="tag g">быстрая</span>
-      </div>
-      <div class="desc">Мелкие задачи, быстрые ответы, когда не нужно глубоко. Экономит лимиты.</div>
-      <div class="use">быстро · дёшево</div>
-    </div>
-  </div>
-
-  <div class="card warn">
-    <h3 style="margin-top:0;">⚠️ Про лимиты</h3>
-    <p>На плане Pro ($20) лимиты щадящие, но есть. Если упёрся — переключись на Sonnet/Haiku для простых задач, Opus держи для важного. Или апгрейд на Max — там лимиты в разы больше.</p>
-  </div>
-</section>
-
-<!-- MEMORY -->
-<section id="memory">
-  <span class="eyebrow">Переезд с ChatGPT</span>
-  <h2>🧬 Память, контекст и перенос базы из GPT</h2>
-
-  <div class="grid-2">
-    <div class="card">
-      <h3 style="margin-top:0;">Как устроена память в Клоде</h3>
-      <ul>
-        <li><b>В рамках чата</b> — помнит весь диалог, пока окно не забьётся</li>
-        <li><b>В Projects</b> — загружаешь файлы + системную инструкцию, они всегда в контексте</li>
-        <li><b>В Cowork</b> — помнит весь проект, включая историю действий</li>
-        <li><b>Styles / Customize</b> — помнит твой стиль во всех чатах</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0;">Перенос базы из ChatGPT</h3>
-      <ol style="padding-left: 18px; margin: 0;">
-        <li>В GPT: Settings → Personalization → Memory → «Manage memories»</li>
-        <li>Копируешь всё что там есть</li>
-        <li>В Клоде создаёшь <b>Project «Обо мне»</b></li>
-        <li>В системную инструкцию кидаешь содержимое + свои ДНК Бизнеса / ЦА</li>
-        <li>Всё. Клод теперь знает про тебя столько же, сколько GPT, и даже больше</li>
-      </ol>
-    </div>
-  </div>
-
-  <div class="card ok">
-    <b>💡 Лайфхак:</b> Сделай один <b>Project «Моя база»</b> с файлами: ДНК Бизнеса, ДНК Клиента, ToV, продукты, цены, кейсы. Каждый новый чат в этом проекте уже знает про тебя всё. Экономит часы на объяснениях.
-  </div>
-</section>
-
-<!-- PRACTICE -->
-<section id="practice">
-  <span class="eyebrow">Живая тренировка · прямо на эфире</span>
-  <h2>🏋️ Делаем вместе</h2>
-
-  <div class="card">
-    <h3 style="margin-top:0;">Задача 1. Метапромт под реальную задачу (10 мин)</h3>
-    <p>Каждый пишет свою задачу в чат. Берём 2-3 примера, прогоняем через мета-промт, показываем результат.</p>
-  </div>
-
-  <div class="card">
-    <h3 style="margin-top:0;">Задача 2. Настройка Project «Обо мне» (10 мин)</h3>
-    <p>Заходим в Клод → создаём Project → кидаем системную инструкцию из шаблона. Пробуем задать тот же вопрос «в пустом чате» и «в проекте» — почувствуй разницу.</p>
-  </div>
-
-  <div class="card">
-    <h3 style="margin-top:0;">Задача 3. Тест моделей (5 мин)</h3>
-    <p>Один промт прогоняем в Opus, Sonnet, Haiku. Смотрим: где скорость, где глубина, где баланс. Запоминаем ощущения.</p>
-  </div>
-</section>
-
-<!-- HOMEWORK -->
-<section id="homework">
-  <span class="eyebrow">Домашка для внедрения</span>
-  <h2>📋 Что сделать до следующего урока</h2>
-
-  <div class="grid-3">
-    <div class="card">
-      <h3 style="margin-top:0;">Блок А · База</h3>
-      <ul>
-        <li>Создать Project «Обо мне» в Клоде</li>
-        <li>Перенести память из ChatGPT</li>
-        <li>Настроить 1 Style под свой ToV</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0;">Блок Б · Промты</h3>
-      <ul>
-        <li>Написать 3 промта по формуле 5 элементов</li>
-        <li>1 из них собрать через мета-промт</li>
-        <li>Сравнить: до формулы vs после</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0;">Блок В · Привычка</h3>
-      <ul>
-        <li>1 задачу из жизни сегодня сделать в Клоде</li>
-        <li>Записать: сколько времени сэкономил</li>
-        <li>Скинуть пост-импрешн в чат потока</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="card warn">
-    <b>⏱ Время на всё:</b> ~40 минут. Не перфекционируй, делай «на коленке» — главное пройти руками. Дальше докрутим на следующих уроках.
-  </div>
-</section>
-
-<!-- NEXT -->
-<section id="next">
-  <div class="cta-end">
-    <span class="eyebrow">Что ты теперь умеешь</span>
-    <h2>Ты уже не новичок в ИИ</h2>
-    <p class="lead" style="max-width: 640px; margin: 0 auto 24px;">
-      Знаешь зоопарк нейронок. Пишешь нормальные промты. Умеешь мета-промтить.<br>
-      Настроил Клод как рабочее место. Перенёс базу. Понимаешь модели и лимиты.
-    </p>
-
-    <div class="grid-4" style="margin-top: 30px; text-align: left;">
-      <div>
-        <div class="tag v">Урок 3</div>
-        <h3 style="margin: 8px 0 4px; font-size: 16px;">Deep Research</h3>
-        <p style="font-size: 13px; color: var(--muted); margin: 0;">Мультивселенная DR в 4 нейронках. Собираем рынок, ЦА, конкурентов.</p>
-      </div>
-      <div>
-        <div class="tag v">Урок 4</div>
-        <h3 style="margin: 8px 0 4px; font-size: 16px;">ДНК Клиента</h3>
-        <p style="font-size: 13px; color: var(--muted); margin: 0;">Первый ИИ-ассистент — спец по твоей ЦА. Работает 24/7.</p>
-      </div>
-      <div>
-        <div class="tag v">Урок 5</div>
-        <h3 style="margin: 8px 0 4px; font-size: 16px;">Упаковка & Оффер</h3>
-        <p style="font-size: 13px; color: var(--muted); margin: 0;">Ассистент «Хормози». Формула $100M Offers.</p>
-      </div>
-      <div>
-        <div class="tag v">Урок 6</div>
-        <h3 style="margin: 8px 0 4px; font-size: 16px;">Лендинг за вечер</h3>
-        <p style="font-size: 13px; color: var(--muted); margin: 0;">Вайб-кодинг в Claude Code. От промта до живого сайта на Vercel.</p>
+      <h1>Экосистема Claude:<br>фундамент работы</h1>
+      <p class="hero-desc">
+        LIVE-модуль, в котором мы синхронизируем инструментарий, переезжаем с ChatGPT,
+        разбираемся с промтами и настраиваем Claude как рабочее место — раз и навсегда.
+      </p>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-val">3</span><span class="stat-label">главных цели</span></div>
+        <div class="stat"><span class="stat-val">5</span><span class="stat-label">элементов промта</span></div>
+        <div class="stat"><span class="stat-val">3</span><span class="stat-label">модели Claude</span></div>
+        <div class="stat"><span class="stat-val">1M</span><span class="stat-label">токенов памяти</span></div>
       </div>
     </div>
 
-    <blockquote style="text-align: left; max-width: 640px; margin: 30px auto 0;">
-      Фундамент заложен. Теперь едем быстро. Машина — залетаем в Урок 3 🚀
-    </blockquote>
-  </div>
-</section>
+    <!-- ─── MAP ─── -->
+    <section class="section" id="map">
+      <div class="section-header">
+        <div class="section-icon icon-teal">🗺️</div>
+        <h2>Что делаем сегодня</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:24px;font-size:15px;">
+        Три задачи — и вы уходите с полностью настроенным Claude и базовым пониманием промтинга.
+      </p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h5>Переезд с ChatGPT → Claude</h5>
+            <p>Выкачиваем всю память из ChatGPT и переносим в Claude. Технически — 5 минут.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h5>Почему Claude и в чём его сила</h5>
+            <p>Агенты, проекты, Claude Code — что отличает его от всех остальных.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h5>Промтинг без курсов</h5>
+            <p>5-элементная формула + метапромтинг. Больше не нужно учиться «правильно» писать промты.</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-</main>
+    <!-- ─── MACWHISPER ─── -->
+    <section class="section" id="macwhisper">
+      <div class="section-header">
+        <div class="section-icon icon-purple">🎙️</div>
+        <h2>MacWhisper — голос в текст</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:20px;">
+        Локальный транскрибатор. Работает без интернета, быстро, со всеми форматами. Закрываем вопрос транскрибации раз и навсегда.
+      </p>
+
+      <div class="cards-grid">
+        <div class="card card-accent-purple">
+          <h4>🖥️ MacWhisper</h4>
+          <p>Устанавливается локально на Mac. Скачиваете языковую модель → работает офлайн. Транскрибирует видео, аудио, голосовые за секунды.</p>
+        </div>
+        <div class="card card-accent-teal">
+          <h4>🪟 Альтернативы для Windows</h4>
+          <p><strong style="color:var(--text)">Буквица</strong> — платно, но есть бесплатный лимит.<br><strong style="color:var(--text)">Бесплатный бот Влада</strong> — для коротких голосовых из Telegram.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <p><strong>Windows-установка:</strong> При установке Windows скажет "приложение не проверено". Зайдите в <em>Системные настройки → Конфиденциальность и безопасность</em> и нажмите "Подтвердить" — один раз.</p>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p><strong>Лайфхак:</strong> Назначьте горячую клавишу в MacWhisper. Зажимаете кнопку в любом приложении — говорите — Claude мгновенно получает текст. Это и есть реальная скорость работы.</p>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">🎬</div>
+        <p><strong>YouTube Summary:</strong> Установите расширение YouTube Summary для браузера — одной кнопкой вытащите транскрипт любого YouTube-ролика прямо в Claude.</p>
+      </div>
+    </section>
+
+    <!-- ─── MIGRATION ─── -->
+    <section class="section" id="migration">
+      <div class="section-header">
+        <div class="section-icon icon-teal">🔄</div>
+        <h2>Переезд с ChatGPT в Claude</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:24px;">
+        Всё, что ChatGPT знал о вас — переносим в Claude.
+        Контекст — это <strong style="color:var(--text)">король</strong>. Без него нейронка работает в вакууме.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h5>Открыть настройки ChatGPT</h5>
+            <p>Зайдите в <em>Settings → Personalization → Memory</em> и скопируйте весь промт для экспорта памяти.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h5>Вставить промт в ChatGPT</h5>
+            <p>Вставьте в любой чат ChatGPT. Он соберёт всё, что знает о вас, в структурированный текст.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h5>Открыть Claude → Settings → Import</h5>
+            <p>В Claude: <em>Настройки → буква «К» → Start Import</em>. Вставьте скопированную память и нажмите «Сохранить».</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h5>Создать Проект «О себе»</h5>
+            <p>Создайте в Claude проект с вашей базой: ДНК Бизнеса, ДНК Клиента, ToV, продукты, кейсы. Этот проект теперь знает всё о вас в каждом новом чате.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p><strong>Если ChatGPT был на бесплатной версии:</strong> Памяти мало. Зайдите в каждый важный чат отдельно и используйте тот же промт для извлечения контекста по конкретному проекту.</p>
+      </div>
+    </section>
+
+    <!-- ─── WHY CLAUDE ─── -->
+    <section class="section" id="why-claude">
+      <div class="section-header">
+        <div class="section-icon icon-yellow">🧠</div>
+        <h2>Почему Claude</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:24px;">
+        Claude создавался <strong style="color:var(--text)">для программистов</strong> — поэтому его дообучали умные, логичные люди.
+        Результат: возможности, которых нет у других.
+      </p>
+
+      <div class="cards-grid">
+        <div class="card card-accent-purple">
+          <h4>🤖 Агенты</h4>
+          <p>Когда говоришь «зайди на этот сайт и собери информацию» — Claude не один, он отправляет <strong style="color:var(--text)">25 копий себя</strong> на 25 страниц одновременно. Собирают → возвращаются → отчёт в одном чате. Ни у кого такого нет.</p>
+        </div>
+        <div class="card card-accent-teal">
+          <h4>📁 Проекты</h4>
+          <p>Папка, куда загружаешь всё по проекту: файлы, GitHub, документы. Claude <strong style="color:var(--text)">всегда помнит</strong> что было, где чекпоинт, что ты хотел достичь.</p>
+        </div>
+        <div class="card card-accent-yellow">
+          <h4>⚡ Скилы</h4>
+          <p>Как навык сотрудника. Пишешь рецепт «как делать крутой борщ с любовью» — Claude запоминает и воспроизводит каждый раз. Gemini так не умеет.</p>
+        </div>
+        <div class="card card-accent-red">
+          <h4>🔍 Поиск по чатам</h4>
+          <p>Забыл, где был важный разговор? Новый чат: «Мы говорили про X, найди». Через секунду — ссылка на нужный чат.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">🏢</div>
+        <p><strong>Claude — это не просто чат.</strong> Это полноценная AI-операционная система: <br>
+        <strong>Claude.ai</strong> (веб) · <strong>Desktop App</strong> · <strong>Claude Code</strong> (терминал) · <strong>Cowork</strong> (рабочее пространство) · <strong>Skills</strong> · <strong>MCP-коннекторы</strong></p>
+      </div>
+    </section>
+
+    <!-- ─── PROMPT ─── -->
+    <section class="section" id="prompt">
+      <div class="section-header">
+        <div class="section-icon icon-purple">💬</div>
+        <h2>Что такое промт</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:24px;">
+        Промт — это не «вопрос нейронке». Промт — это <strong style="color:var(--text)">техническое задание сотруднику</strong>.
+        Чем точнее ТЗ — тем лучше результат.
+      </p>
+
+      <div class="prompt-formula">
+        <div class="formula-item">
+          <span class="fi-num">01</span>
+          <span class="fi-title">Роль</span>
+          <span class="fi-desc">Кто ты сейчас?</span>
+        </div>
+        <div class="formula-arrow">→</div>
+        <div class="formula-item">
+          <span class="fi-num">02</span>
+          <span class="fi-title">Контекст</span>
+          <span class="fi-desc">О вас и задаче</span>
+        </div>
+        <div class="formula-arrow">→</div>
+        <div class="formula-item">
+          <span class="fi-num">03</span>
+          <span class="fi-title">Задача</span>
+          <span class="fi-desc">Что на выходе</span>
+        </div>
+        <div class="formula-arrow">→</div>
+        <div class="formula-item">
+          <span class="fi-num">04</span>
+          <span class="fi-title">Ограничения</span>
+          <span class="fi-desc">Что не нужно</span>
+        </div>
+        <div class="formula-arrow">→</div>
+        <div class="formula-item">
+          <span class="fi-num">05</span>
+          <span class="fi-title">Формат</span>
+          <span class="fi-desc">Как выдать</span>
+        </div>
+      </div>
+
+      <div class="compare-grid" style="margin-top:20px;">
+        <div class="card compare-bad">
+          <div class="compare-label">❌ Плохой промт</div>
+          <div class="code-block" style="margin:0;font-size:12px;">напиши пост про мой курс</div>
+          <p style="font-size:13px;margin-top:10px;color:var(--text-muted)">Нет контекста → получим шаблонный мусор.</p>
+        </div>
+        <div class="card compare-good">
+          <div class="compare-label">✅ Хороший промт</div>
+          <div class="code-block" style="margin:0;font-size:12px;"><span class="key">Роль:</span> <span class="val">Копирайтер-маркетолог</span>
+<span class="key">Контекст:</span> <span class="val">AI-курс, ЦА 28-45 лет,
+предприниматели</span>
+<span class="key">Задача:</span> <span class="val">Пост 1500 символов для Threads</span>
+<span class="key">Ограничения:</span> <span class="val">Без канцелярщины</span>
+<span class="key">Формат:</span> <span class="val">Хук → История → Инсайт → CTA</span></div>
+        </div>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <p><strong>Важно:</strong> Не нужно каждый раз сидеть с листочком и заполнять 5 полей. Для этого есть метапромтинг (следующий блок) — он делает это за вас автоматически.</p>
+      </div>
+    </section>
+
+    <!-- ─── METAPROMPT ─── -->
+    <section class="section" id="metaprompt">
+      <div class="section-header">
+        <div class="section-icon icon-teal">🔁</div>
+        <h2>Метапромтинг</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:20px;">
+        Когда лень каждый раз придумывать идеальный промт — просто <strong style="color:var(--text)">даёте максимум информации</strong> и просите Claude самого сформировать задачу.
+      </p>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">🧠</div>
+        <p><strong>Логика:</strong> Вместо того чтобы думать «как правильно спросить», ты думаешь «что мне нужно получить». Всё остальное — задача Claude.</p>
+      </div>
+
+      <div class="code-block"><span class="comment">// Шаблон метапромта</span>
+
+<span class="val">Вот вся информация обо мне / проекте / задаче:</span>
+[вставьте всё, что знаете]
+
+<span class="val">Что мне нужно сделать:</span>
+[опишите задачу своими словами]
+
+<span class="val">Задай мне 5-7 уточняющих вопросов, которые нужны
+тебе для решения этой задачи.</span>
+
+<span class="val">Когда получишь ответы — объясни, что ты понял,
+и скажи, что тебе ещё нужно. Потом идём работать.</span></div>
+
+      <div class="cards-grid" style="margin-top:16px;">
+        <div class="card card-accent-purple">
+          <h4>🎯 Что даёт метапромтинг</h4>
+          <ul class="styled-list" style="margin-top:8px;">
+            <li>Claude задаёт правильные вопросы сам</li>
+            <li>Качество результата растёт в 20 раз</li>
+            <li>Вы экономите время на «правильном» формулировании</li>
+            <li>Claude сам строит структуру ответа</li>
+          </ul>
+        </div>
+        <div class="card card-accent-teal">
+          <h4>💡 Ключевой принцип</h4>
+          <p style="margin-bottom:12px;">Думайте не «как спросить», а «что создать».</p>
+          <p>Хотите <strong style="color:var(--text)">сотрудника под задачу</strong> — опишите, какой он должен быть. Хотите <strong style="color:var(--text)">результат</strong> — опишите результат.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p><strong>Лайфхак — последовательные задачи:</strong> Можно дать Claude несколько задач в одном сообщении: «Сначала сделай исследование, потом на базе него задай мне вопросы, потом напиши метапромт». Он выполнит всё по цепочке без вашего участия.</p>
+      </div>
+    </section>
+
+    <!-- ─── DEMO ─── -->
+    <section class="section" id="demo">
+      <div class="section-header">
+        <div class="section-icon icon-red">⚡</div>
+        <h2>Живая демонстрация</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:20px;">
+        На уроке разобрали задачу прямо в прямом эфире — как метапромтинг работает на реальном примере.
+      </p>
+
+      <div class="card card-accent-purple">
+        <h4>📌 Пример: «Тренажёр-задрочка» для Артёма Яешника</h4>
+        <p style="margin-bottom:14px;">Задача: создать тренажёр, который поможет человеку выработать иммунитет к обидным шуткам о своей фамилии — через психотерапию + юмор.</p>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:8px;">В промте было:</p>
+        <ul class="styled-list">
+          <li><strong>Роль сотрудника:</strong> пересечение психотерапевта + комика (такого нет в реальности)</li>
+          <li><strong>Deep Research:</strong> как фамилия влияет на психику и самооценку</li>
+          <li><strong>Уточняющие вопросы:</strong> реакция на подколы, уровень самоиронии, аудитория</li>
+          <li><strong>Формат:</strong> список задрочек, жёсткий и мягкий стёп, финальный рефрейм</li>
+          <li><strong>Бонус:</strong> текст песни в стиле Pink Floyd + стили для генерации музыки в Suno</li>
+        </ul>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">🎓</div>
+        <p><strong>Вывод из демо:</strong> Разница между «напиши обзывалки» и детальным метапромтом — это разница между шаблонным мусором и персонализированной программой, которая реально работает. Всё решает контекст и чёткость задачи.</p>
+      </div>
+    </section>
+
+    <!-- ─── MODELS ─── -->
+    <section class="section" id="models">
+      <div class="section-header">
+        <div class="section-icon icon-purple">🎛️</div>
+        <h2>Модели Claude</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:24px;">
+        Claude — это компания, в которой работают три сотрудника разного уровня: <strong style="color:var(--text)">Junior, Middle и Senior</strong>.
+        Выбирайте под задачу.
+      </p>
+
+      <div class="models-wrap">
+        <table class="models-table">
+          <thead>
+            <tr>
+              <th>Модель</th>
+              <th>Уровень</th>
+              <th>Задачи</th>
+              <th>Скорость</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="model-name">Haiku</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Хайку</div>
+              </td>
+              <td><span class="badge badge-fast">Быстрый</span></td>
+              <td>Простые задачи, автоответчики, проверить сообщение, найти файл, короткие тексты</td>
+              <td style="color:var(--accent2)">⚡⚡⚡ Очень быстро</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="model-name">Sonnet</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Соннет</div>
+              </td>
+              <td><span class="badge badge-mid">Рабочая лошадка</span></td>
+              <td>80% повседневных задач: тексты, анализ, лендинги, контент, ассистенты</td>
+              <td style="color:var(--accent2)">⚡⚡ Быстро</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="model-name">Opus</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Опус</div>
+              </td>
+              <td><span class="badge badge-top">Топ</span></td>
+              <td>Стратегия, методологии, сложный анализ, планирование, глубокие исследования</td>
+              <td style="color:var(--accent4)">⚡ Медленно, думает долго</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cards-grid" style="margin-top:20px;">
+        <div class="card card-accent-yellow">
+          <h4>🎛️ Режимы усилий</h4>
+          <ul class="styled-list" style="margin-top:8px;">
+            <li><strong>Adaptive:</strong> для мамочек в декрете — модель сама решает, сколько думать</li>
+            <li><strong>High:</strong> рекомендуемый рабочий режим — Влад работает на High</li>
+            <li><strong>Max:</strong> продумывает 5 сценариев на каждый ответ, ест токены в 5x быстрее</li>
+          </ul>
+        </div>
+        <div class="card card-accent-teal">
+          <h4>💰 Стратегия использования</h4>
+          <p style="margin-bottom:10px;">Opus создаёт план → Haiku пишет пост по этому плану. <strong style="color:var(--text)">Экономия токенов в 10x.</strong></p>
+          <p>Ключевое правило: задачи, влияющие на деньги — самая умная модель. Остальное — Sonnet или Haiku.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">🔢</div>
+        <p><strong>Версии моделей:</strong> Claude 4.7 на 30% лучше 4.6 — но по цене одинаковы. Просто всегда сидите на последней версии и не переключайтесь без необходимости.</p>
+      </div>
+    </section>
+
+    <!-- ─── TOKENS ─── -->
+    <section class="section" id="tokens">
+      <div class="section-header">
+        <div class="section-icon icon-yellow">📦</div>
+        <h2>Токены и сессии</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:24px;">
+        Токены — это <strong style="color:var(--text)">новая нефть</strong>. Каждый запрос к Claude
+        потребляет вычислительные мощности. Нужно понимать экономику.
+      </p>
+
+      <div class="cards-grid-3">
+        <div class="card card-accent-purple" style="text-align:center;">
+          <div style="font-size:32px;margin-bottom:8px;">$20</div>
+          <h4>Старт</h4>
+          <p>Базовая подписка. Хватает для текстов и контента. Для вайпкодинга закончится быстро.</p>
+        </div>
+        <div class="card card-accent-teal" style="text-align:center;">
+          <div style="font-size:32px;margin-bottom:8px;">$100</div>
+          <h4>Pro</h4>
+          <p>Для активной работы с кодом и сложными задачами. Больше токенов, выше лимиты.</p>
+        </div>
+        <div class="card card-accent-yellow" style="text-align:center;">
+          <div style="font-size:32px;margin-bottom:8px;">$200</div>
+          <h4>Max</h4>
+          <p>В 20 раз быстрее. Больше не только токенов, но и мощности процессора. Влад работает на Max.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <p><strong>Сессии:</strong> Claude выдаёт лимит токенов порциями — сессия ~5 часов. Если истратили — ждёте обновления. Чтобы не попадать на паузу в разгар работы, выбирайте правильную модель под задачу.</p>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p><strong>Мышление инвестора:</strong> «Я потратил $40 на дополнительные токены, но заработал $400». Считайте не расходы — считайте возврат. Если задача влияет на деньги — не экономьте на модели.</p>
+      </div>
+    </section>
+
+    <!-- ─── CONTEXT ─── -->
+    <section class="section" id="context">
+      <div class="section-header">
+        <div class="section-icon icon-teal">🪟</div>
+        <h2>Контекстное окно</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:24px;">
+        Контекст — <strong style="color:var(--text)">король</strong>. Это всё, что нейронка помнит в рамках одного чата.
+        Нейронки работают как СДВГэшные подростки — если долго общаться, забывают начало.
+      </p>
+
+      <div class="cards-grid">
+        <div class="card card-accent-purple">
+          <h4>📊 Размеры контекста</h4>
+          <ul class="styled-list" style="margin-top:8px;">
+            <li><strong>Стандартный чат:</strong> базовый лимит, потом забывает начало</li>
+            <li><strong>Claude Code (Opus 1M):</strong> 1 млн токенов — ~750 страниц текста</li>
+            <li><strong>Файлы локально:</strong> хранятся у вас на компьютере, не в облаке</li>
+          </ul>
+        </div>
+        <div class="card card-accent-teal">
+          <h4>📁 Как работает память</h4>
+          <ul class="styled-list" style="margin-top:8px;">
+            <li><strong>Memory (настройки):</strong> информация о вас между чатами</li>
+            <li><strong>Проекты:</strong> постоянный контекст по проекту всегда доступен</li>
+            <li><strong>Локальные файлы:</strong> можно скормить другой нейронке позже</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">💻</div>
+        <p><strong>Почему Desktop, а не Web:</strong> В Claude Desktop вы даёте Claude доступ к папке на вашем компьютере. Он хранит память чатов локально → у вас 1M токенов в сессии вместо стандартного лимита. Плюс: никогда не было ни одной утечки данных.</p>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p><strong>Когда заканчивается 1 млн токенов:</strong> Claude не теряет всё — он делает «сжатие» по ключевым моментам и продолжает работу. В обычном веб-чате такой функции нет.</p>
+      </div>
+    </section>
+
+    <!-- ─── DESKTOP VS WEB ─── -->
+    <section class="section" id="desktop">
+      <div class="section-header">
+        <div class="section-icon icon-red">💻</div>
+        <h2>Claude Desktop vs Web</h2>
+      </div>
+
+      <div class="compare-grid">
+        <div class="card compare-bad">
+          <div class="compare-label">Веб-версия (claude.ai)</div>
+          <ul class="styled-list" style="margin-top:10px;">
+            <li>Одно окно, как ChatGPT</li>
+            <li>Быстрые вопросы и ответы</li>
+            <li>Базовый лимит памяти</li>
+            <li>Достаточно для 90% обычных пользователей</li>
+          </ul>
+          <div class="callout callout-warn" style="margin-top:16px;padding:12px 16px;">
+            <div class="callout-icon" style="font-size:16px;">⚠️</div>
+            <p style="font-size:13px;">На нашем курсе в веб-версии <strong>работать не будем</strong>.</p>
+          </div>
+        </div>
+        <div class="card compare-good">
+          <div class="compare-label">Desktop App</div>
+          <ul class="styled-list" style="margin-top:10px;">
+            <li>Доступ к файлам на вашем компьютере</li>
+            <li>1M токенов контекста</li>
+            <li>Claude Code (мощный терминал)</li>
+            <li>Cowork (рабочее пространство проекта)</li>
+            <li>Хранение памяти локально</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p><strong>Философия:</strong> В эру, когда с нейронками можно всё — люди конкурируют только по одному критерию: <strong>скорость и эффективность</strong>. Desktop даёт эту скорость.</p>
+      </div>
+    </section>
+
+    <!-- ─── CODE ─── -->
+    <section class="section" id="code">
+      <div class="section-header">
+        <div class="section-icon icon-purple">🖥️</div>
+        <h2>Claude Code</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:20px;">
+        Чёрный экран с белыми циферками. Не страшно — это просто <strong style="color:var(--text)">самый мощный способ работать с Claude</strong>.
+        Принимайте как неизбежность.
+      </p>
+
+      <div class="cards-grid">
+        <div class="card card-accent-purple">
+          <h4>🚀 Что умеет Claude Code</h4>
+          <ul class="styled-list" style="margin-top:8px;">
+            <li>Создавать файлы и папки на вашем компьютере</li>
+            <li>Делать сайты, скрипты, мини-приложения</li>
+            <li>Работать с большими проектами</li>
+            <li>Принимать цепочку задач в одном сообщении</li>
+          </ul>
+        </div>
+        <div class="card card-accent-teal">
+          <h4>⚙️ Первая настройка</h4>
+          <ul class="styled-list" style="margin-top:8px;">
+            <li>Создайте папку <em>claudecode</em> на компьютере</li>
+            <li>Дайте Claude доступ к этой папке</li>
+            <li>Всё созданное будет там — чисто и упорядоченно</li>
+            <li>Включите Bypass Permission Mode (если не хотите подтверждать каждое действие)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">🔐</div>
+        <p><strong>Bypass Permission Mode:</strong> Settings → Claude → ползунок «Bypass Permission Mode». После этого Claude не будет каждый раз спрашивать разрешения. Удобно для долгих автономных задач — чтобы не возвращаться к компьютеру каждые 5 минут.</p>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p><strong>Суперсила Code:</strong> Дайте Claude 3 задачи в одном сообщении: «Сначала сделай исследование, потом задай мне вопросы, потом напиши метапромт». Он выполнит всё по цепочке. Вам не надо ждать каждый шаг вручную.</p>
+      </div>
+    </section>
+
+    <!-- ─── CHROME ─── -->
+    <section class="section" id="chrome">
+      <div class="section-header">
+        <div class="section-icon icon-teal">🌐</div>
+        <h2>Claude в Chrome</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:20px;">
+        Расширение для браузера — Claude видит всё, что вы видите на экране, и может действовать вместо вас.
+      </p>
+
+      <div class="cards-grid">
+        <div class="card card-accent-teal">
+          <h4>🤖 Что умеет</h4>
+          <ul class="styled-list" style="margin-top:8px;">
+            <li>Читать любую страницу в браузере</li>
+            <li>Кликать кнопки и заполнять формы</li>
+            <li>Переходить по ссылкам</li>
+            <li>Создавать вкладки и таблицы</li>
+          </ul>
+        </div>
+        <div class="card card-accent-purple">
+          <h4>💡 Примеры задач</h4>
+          <ul class="styled-list" style="margin-top:8px;">
+            <li>Заполнить декларацию или форму</li>
+            <li>Пройти тест за вас</li>
+            <li>Собрать данные с сайта</li>
+            <li>Изучи эти модули курса и добавь вкладку с расписанием</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">🧩</div>
+        <p><strong>MCP-коннекторы:</strong> Через них Claude подключается к Google Docs, Zoom, Notion, Gmail и другим сервисам. Скилы + MCP = Claude умеет работать со всем вашим стеком инструментов.</p>
+      </div>
+    </section>
+
+    <!-- ─── PRACTICE ─── -->
+    <section class="section" id="practice">
+      <div class="section-header">
+        <div class="section-icon icon-red">🏋️</div>
+        <h2>Живая практика</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:24px;">
+        Пока мы на уроке — делаем сразу. Три задачи прямо сейчас.
+      </p>
+
+      <div class="task-box">
+        <div class="task-header">
+          <div class="task-num">1</div>
+          <div class="task-title">Установить MacWhisper и настроить горячую клавишу</div>
+          <div class="task-time">⏱ 10 мин</div>
+        </div>
+        <p>Скачайте, установите, выберите языковую модель (русский), скачайте её локально. Назначьте горячую клавишу для быстрого голосового ввода.</p>
+      </div>
+
+      <div class="task-box">
+        <div class="task-header">
+          <div class="task-num">2</div>
+          <div class="task-title">Перенести память из ChatGPT в Claude</div>
+          <div class="task-time">⏱ 5 мин</div>
+        </div>
+        <p>Используйте промт из урока. Скопируйте память → импортируйте в Claude → создайте Проект «О себе» с вашей базой.</p>
+      </div>
+
+      <div class="task-box">
+        <div class="task-header">
+          <div class="task-num">3</div>
+          <div class="task-title">Написать первый промт по 5-элементной формуле</div>
+          <div class="task-time">⏱ 10 мин</div>
+        </div>
+        <p>Возьмите реальную задачу из вашего бизнеса. Напишите промт: Роль → Контекст → Задача → Ограничения → Формат. Потом повторите через метапромтинг и сравните результаты.</p>
+      </div>
+    </section>
+
+    <!-- ─── HOMEWORK ─── -->
+    <section class="section" id="homework">
+      <div class="section-header">
+        <div class="section-icon icon-yellow">📋</div>
+        <h2>Задание до пятницы</h2>
+      </div>
+
+      <div class="cards-grid">
+        <div class="card card-accent-purple">
+          <h4>Блок А · Установка</h4>
+          <ul class="styled-list" style="margin-top:10px;">
+            <li>Скачать Claude Desktop</li>
+            <li>Создать папку <em>claudecode</em></li>
+            <li>Установить MacWhisper / альтернативу</li>
+            <li>Импортировать память из ChatGPT</li>
+            <li>Создать Проект «О себе»</li>
+          </ul>
+        </div>
+        <div class="card card-accent-teal">
+          <h4>Блок Б · Промты</h4>
+          <ul class="styled-list" style="margin-top:10px;">
+            <li>Написать 3 промта по формуле 5 элементов</li>
+            <li>Один промт построить через метапромтинг</li>
+            <li>Сравнить результаты до/после</li>
+            <li>Протестировать Haiku, Sonnet и Opus на одной задаче</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">🗓️</div>
+        <p><strong>В пятницу — Q&A сессия.</strong> Приходите с вопросами, с тем, что не получилось, с тем, что удивило. Разберём всё в живом формате на ваших задачах и ваших компьютерах.</p>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <p><strong>Не перфекционизировать.</strong> Не нужно делать идеально. Главное — попробовать. Нейронка вас ускорит, но только если вы начнёте с ней работать.</p>
+      </div>
+    </section>
+
+    <!-- ─── NEXT ─── -->
+    <section class="section" id="next">
+      <div class="section-header">
+        <div class="section-icon icon-purple">→</div>
+        <h2>Что дальше</h2>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:24px;">
+        Фундамент заложен. Со следующей недели начинаем работать по-настоящему.
+      </p>
+
+      <div class="next-cards">
+        <a class="next-card" href="#">
+          <div class="nc-num">Урок 2</div>
+          <div class="nc-title">Deep Research</div>
+          <div class="nc-desc">Анализируем нишу, конкурентов, тренды и ЦА. Строим стратегию, которая определит вектор на 2 месяца.</div>
+        </a>
+        <a class="next-card" href="#">
+          <div class="nc-num">Урок 3</div>
+          <div class="nc-title">ДНК Клиента</div>
+          <div class="nc-desc">Глубинное понимание аудитории. Кто они, чего хотят, какие у них страхи и как они принимают решения.</div>
+        </a>
+        <a class="next-card" href="#">
+          <div class="nc-num">Урок 4</div>
+          <div class="nc-title">Упаковка продукта</div>
+          <div class="nc-desc">Из понимания аудитории создаём оффер, который невозможно проигнорировать.</div>
+        </a>
+        <a class="next-card" href="#">
+          <div class="nc-num">Урок 5+</div>
+          <div class="nc-title">Лендинг, Контент, Продажи</div>
+          <div class="nc-desc">Автоматизация воронок, AI-ассистенты, вайпкодинг и создание приложений.</div>
+        </a>
+      </div>
+
+      <div class="footer-line">
+        <p>Фундамент заложен. Теперь едем быстро.</p>
+        <p style="margin-top:8px;font-size:13px;">
+          <strong>AI · Маркетолог</strong> · Модуль 1 · LIVE по экосистеме Claude
+        </p>
+      </div>
+    </section>
+
+  </main>
 </div>
 
 <script>
-  const links = document.querySelectorAll('nav a');
-  const sections = document.querySelectorAll('section');
+  // Scroll-spy navigation
+  const sections = document.querySelectorAll('.section, .hero');
+  const navLinks = document.querySelectorAll('.nav-list a');
+
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        links.forEach(l => l.classList.remove('active'));
         const id = entry.target.id;
-        const active = document.querySelector(`nav a[href="#${id}"]`);
-        if (active) active.classList.add('active');
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
       }
     });
-  }, { rootMargin: '-40% 0px -55% 0px' });
-  sections.forEach(s => observer.observe(s));
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(section => {
+    if (section.id) observer.observe(section);
+  });
+
+  // Smooth click
+  navLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
 </script>
 </body>
 </html>
